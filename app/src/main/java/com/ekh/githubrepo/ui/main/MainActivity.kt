@@ -29,11 +29,12 @@ class MainActivity : AppCompatActivity() {
     private fun bindSearchView(view: SearchView, viewModel: MainViewModel) {
         view.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                TODO("Not yet implemented")
+                viewModel.search()
+                view.clearFocus()
+                return false
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                // TODO: 체크 추가
                 viewModel.updateQuery(newText ?: "")
                 return true
             }

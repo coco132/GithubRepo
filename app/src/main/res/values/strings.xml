@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">GithubRepo</string>
+    <string name="token">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</string>
 </resources>
