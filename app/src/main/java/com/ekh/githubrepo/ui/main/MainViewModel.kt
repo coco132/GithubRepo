@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    val repository: GithubRepository,
+    private val repository: GithubRepository,
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<UiModel> = MutableStateFlow(UiModel())
     val uiState: StateFlow<UiModel> = _uiState.asStateFlow()
@@ -33,15 +33,18 @@ class MainViewModel @Inject constructor(
     }
 
     fun search() {
-        Timber.d("__ search")
-        val query = uiState.value.query
-        val result = repository.search(query)
-        _uiState.update {
-            it.copy(
-                itemList = result
-            )
+        viewModelScope.launch {
+            Timber.d("__ search")
+            val query = uiState.value.query
+            val result = repository.search(query, 0)
+            _uiState.update {
+                it.copy(
+                    itemList = result.items
+                )
+            }
         }
     }
+
 
     data class UiModel(
         val query: String = "",

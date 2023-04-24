@@ -4,10 +4,10 @@ import com.ekh.githubrepo.data.RepoResponse
 import javax.inject.Inject
 
 class GithubRepository @Inject constructor(
-    val api: GithubApi
+    private val api: GithubApi
 ) {
-    fun search(q: String): RepoResponse {
-        return api.search(q)
+    suspend fun search(q: String, page: Int): RepoResponse {
+        return api.search(q, page, 20)
     }
 
 }
