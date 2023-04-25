@@ -19,6 +19,7 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<UiModel> = MutableStateFlow(UiModel())
     val uiState: StateFlow<UiModel> = _uiState.asStateFlow()
+    private var currentPage: Int = 0
 
     fun updateQuery(query: String) {
         if (uiState.value.query == query) return
@@ -35,8 +36,9 @@ class MainViewModel @Inject constructor(
     fun search() {
         viewModelScope.launch {
             Timber.d("__ search")
+            currentPage = 0
             val query = uiState.value.query
-            val result = repository.search(query, 0)
+            val result = repository.search(query, currentPage)
             _uiState.update {
                 it.copy(
                     itemList = result.items
@@ -45,9 +47,23 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun loadNextPage() {
+        viewModelScope.launch {
+            currentPage++
+            Timber.d("__ loadNextPage: $currentPage")
+            val query = uiState.value.query
+            val result = repository.search(query, currentPage)
+            val itemList = result.items
+            _uiState.update {
+                it.copy(
+                    itemList = it.itemList + itemList
+                )
+            }
+        }
+    }
 
     data class UiModel(
         val query: String = "",
-        val itemList: List<Repo> = listOf()
+        val itemList: List<Repo> = listOf(),
     )
 }
