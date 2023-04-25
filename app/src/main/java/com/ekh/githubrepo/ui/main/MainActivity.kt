@@ -1,8 +1,10 @@
 package com.ekh.githubrepo.ui.main
 
+import android.content.Context
 import android.os.Bundle
 import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatEditText
@@ -32,6 +34,7 @@ class MainActivity : AppCompatActivity() {
         bindSearchView(binding.etSearch, viewModel)
         bindRecyclerView(binding.rvList, viewModel)
         bindLoading(binding.pbLoading, viewModel)
+        bindErrorMessage(this, viewModel)
     }
 
     private fun bindSearchView(view: AppCompatEditText, viewModel: MainViewModel) {
@@ -91,6 +94,19 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.map { it.isLoading }.distinctUntilChanged().collectLatest {
                     view.isInvisible = !it
+                }
+            }
+        }
+    }
+
+    private fun bindErrorMessage(context: Context, viewModel: MainViewModel) {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.map { it.errorMessage }.distinctUntilChanged().collectLatest {
+                    if (it == null) return@collectLatest
+                    Timber.d("__ error message : $it")
+                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                    viewModel.clearErrorText()
                 }
             }
         }

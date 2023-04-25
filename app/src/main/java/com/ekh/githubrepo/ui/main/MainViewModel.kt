@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.ekh.githubrepo.data.Repo
 import com.ekh.githubrepo.datasource.GithubRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,8 +30,15 @@ class MainViewModel @Inject constructor(
     private val _loadingCounterState: MutableStateFlow<Int> = MutableStateFlow(0)
     private val loadingCounter: AtomicInteger = AtomicInteger(0)
 
+    private val exceptionHandler: CoroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        _uiState.update {
+            Timber.d("__ exception : $throwable")
+            it.copy(errorMessage = throwable.message)
+        }
+    }
+
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(exceptionHandler) {
             _loadingCounterState.collect { count ->
                 _uiState.update {
                     it.copy(isLoading = count > 0)
@@ -39,10 +47,18 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun clearErrorText() {
+        viewModelScope.launch(exceptionHandler) {
+            _uiState.update {
+                it.copy(errorMessage = null)
+            }
+        }
+    }
+
     fun updateQuery(query: String) {
         if (uiState.value.query == query) return
         Timber.d("__ updateQuery: $query")
-        viewModelScope.launch {
+        viewModelScope.launch(exceptionHandler) {
             _uiState.update {
                 it.copy(
                     query = query
@@ -52,7 +68,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun search() {
-        viewModelScope.withLoading {
+        viewModelScope.withLoading(exceptionHandler) {
             Timber.d("__ search")
             currentPage = 1
             val query = uiState.value.query
@@ -66,7 +82,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun loadNextPage() {
-        viewModelScope.withLoading {
+        viewModelScope.withLoading(exceptionHandler) {
             currentPage++
             Timber.d("__ loadNextPage: $currentPage")
             val query = uiState.value.query
@@ -100,5 +116,6 @@ class MainViewModel @Inject constructor(
         val query: String = "",
         val itemList: List<Repo> = listOf(),
         val isLoading: Boolean = false,
+        val errorMessage: String? = null,
     )
 }
